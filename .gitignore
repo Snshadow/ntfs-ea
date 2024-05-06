@@ -19,3 +19,9 @@
 
 # Go workspace file
 go.work
+
+# vscode configuration file
+/.vscode
+
+# intellij configuration file
+/.idea
