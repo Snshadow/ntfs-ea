@@ -11,15 +11,16 @@ import (
 
 // ntdll.dll functions
 
-//sys	ntOpenFile(fileHandle *windows.Handle, accessMask uint32, objectAttributes *windows.OBJECT_ATTRIBUTES, ioStatusBlock *windows.IO_STATUS_BLOCK, sharedAccess uint32, openOptions uint32) (err error) = ntdll.NtOpenFile
-//sys	ntClose(fileHandle windows.Handle) (err error) = ntdll.NtClose
-//sys	ntSetEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32) (err error) = ntdll.NtSetEaFile
-//sys	ntQueryEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32, returnSingleEntry bool, eaList unsafe.Pointer, eaListLength uint32, eaIndex *uint32, restartScan bool) (err error) = ntdll.NtQueryEaFile	
+//sys	ntOpenFile(fileHandle *windows.Handle, accessMask uint32, objectAttributes *windows.OBJECT_ATTRIBUTES, ioStatusBlock *windows.IO_STATUS_BLOCK, sharedAccess uint32, openOptions uint32) (err windows.NTStatus) = ntdll.NtOpenFile
+//sys	ntClose(fileHandle windows.Handle) (err windows.NTStatus) = ntdll.NtClose
+//sys	ntSetEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32) (err windows.NTStatus) = ntdll.NtSetEaFile
+//sys	ntQueryEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32, returnSingleEntry bool, eaList unsafe.Pointer, eaListLength uint32, eaIndex *uint32, restartScan bool) (err windows.NTStatus) = ntdll.NtQueryEaFile
+//sys	ntQueryInformationFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, fileInformation unsafe.Pointer, length uint32, fileInformationClass int32) (err windows.NTStatus) = ntdll.NtQueryInformationFile
 
 func NtOpenFile(accessMask uint32, objectAttributes *windows.OBJECT_ATTRIBUTES, ioStatusBlock *windows.IO_STATUS_BLOCK, sharedAccess uint32, openOptions uint32) (fileHandle windows.Handle, err error) {
-	r := ntOpenFile(&fileHandle, accessMask, objectAttributes, ioStatusBlock, sharedAccess, openOptions)
+	ntStat := ntOpenFile(&fileHandle, accessMask, objectAttributes, ioStatusBlock, sharedAccess, openOptions)
 
-	if ntStat := r.(windows.NTStatus); ntStat != windows.STATUS_SUCCESS {
+	if ntStat != windows.STATUS_SUCCESS {
 		err = ntStat
 	}
 
@@ -27,9 +28,9 @@ func NtOpenFile(accessMask uint32, objectAttributes *windows.OBJECT_ATTRIBUTES, 
 }
 
 func NtClose(fileHandle windows.Handle) (err error) {
-	r := ntClose(fileHandle)
+	ntStat := ntClose(fileHandle)
 
-	if ntStat := r.(windows.NTStatus); ntStat != windows.STATUS_SUCCESS {
+	if ntStat != windows.STATUS_SUCCESS {
 		err = ntStat
 	}
 
@@ -37,9 +38,9 @@ func NtClose(fileHandle windows.Handle) (err error) {
 }
 
 func NtSetEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32) (err error) {
-	r := ntSetEaFile(fileHandle, ioStatusBlock, buffer, length)
+	ntStat := ntSetEaFile(fileHandle, ioStatusBlock, buffer, length)
 
-	if ntStat := r.(windows.NTStatus); ntStat != windows.STATUS_SUCCESS {
+	if ntStat != windows.STATUS_SUCCESS {
 		err = ntStat
 	}
 
@@ -47,9 +48,19 @@ func NtSetEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLO
 }
 
 func NtQueryEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32, returnSingleEntry bool, eaList unsafe.Pointer, eaListLength uint32, eaIndex *uint32, restartScan bool) (err error) {
-	r := ntQueryEaFile(fileHandle, ioStatusBlock, buffer, length, returnSingleEntry, eaList, eaListLength, eaIndex, restartScan)
+	ntStat := ntQueryEaFile(fileHandle, ioStatusBlock, buffer, length, returnSingleEntry, eaList, eaListLength, eaIndex, restartScan)
 
-	if ntStat := r.(windows.NTStatus); ntStat != windows.STATUS_SUCCESS {
+	if ntStat != windows.STATUS_SUCCESS {
+		err = ntStat
+	}
+
+	return
+}
+
+func NtQueryInformationFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, fileInformation unsafe.Pointer, length uint32, fileInformationClass int32) (err error) {
+	ntStat := ntQueryInformationFile(fileHandle, ioStatusBlock, fileInformation, length, fileInformationClass)
+
+	if ntStat != windows.STATUS_SUCCESS {
 		err = ntStat
 	}
 

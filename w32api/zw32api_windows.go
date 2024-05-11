@@ -40,29 +40,26 @@ func errnoErr(e syscall.Errno) error {
 var (
 	modntdll = windows.NewLazySystemDLL("ntdll.dll")
 
-	procNtClose       = modntdll.NewProc("NtClose")
-	procNtOpenFile    = modntdll.NewProc("NtOpenFile")
-	procNtQueryEaFile = modntdll.NewProc("NtQueryEaFile")
-	procNtSetEaFile   = modntdll.NewProc("NtSetEaFile")
+	procNtClose                = modntdll.NewProc("NtClose")
+	procNtOpenFile             = modntdll.NewProc("NtOpenFile")
+	procNtQueryEaFile          = modntdll.NewProc("NtQueryEaFile")
+	procNtQueryInformationFile = modntdll.NewProc("NtQueryInformationFile")
+	procNtSetEaFile            = modntdll.NewProc("NtSetEaFile")
 )
 
-func ntClose(fileHandle windows.Handle) (err error) {
-	r1, _, e1 := syscall.Syscall(procNtClose.Addr(), 1, uintptr(fileHandle), 0, 0)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+func ntClose(fileHandle windows.Handle) (err windows.NTStatus) {
+	r0, _, _ := syscall.Syscall(procNtClose.Addr(), 1, uintptr(fileHandle), 0, 0)
+	err = windows.NTStatus(r0)
 	return
 }
 
-func ntOpenFile(fileHandle *windows.Handle, accessMask uint32, objectAttributes *windows.OBJECT_ATTRIBUTES, ioStatusBlock *windows.IO_STATUS_BLOCK, sharedAccess uint32, openOptions uint32) (err error) {
-	r1, _, e1 := syscall.Syscall6(procNtOpenFile.Addr(), 6, uintptr(unsafe.Pointer(fileHandle)), uintptr(accessMask), uintptr(unsafe.Pointer(objectAttributes)), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(sharedAccess), uintptr(openOptions))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+func ntOpenFile(fileHandle *windows.Handle, accessMask uint32, objectAttributes *windows.OBJECT_ATTRIBUTES, ioStatusBlock *windows.IO_STATUS_BLOCK, sharedAccess uint32, openOptions uint32) (err windows.NTStatus) {
+	r0, _, _ := syscall.Syscall6(procNtOpenFile.Addr(), 6, uintptr(unsafe.Pointer(fileHandle)), uintptr(accessMask), uintptr(unsafe.Pointer(objectAttributes)), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(sharedAccess), uintptr(openOptions))
+	err = windows.NTStatus(r0)
 	return
 }
 
-func ntQueryEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32, returnSingleEntry bool, eaList unsafe.Pointer, eaListLength uint32, eaIndex *uint32, restartScan bool) (err error) {
+func ntQueryEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32, returnSingleEntry bool, eaList unsafe.Pointer, eaListLength uint32, eaIndex *uint32, restartScan bool) (err windows.NTStatus) {
 	var _p0 uint32
 	if returnSingleEntry {
 		_p0 = 1
@@ -71,17 +68,19 @@ func ntQueryEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_B
 	if restartScan {
 		_p1 = 1
 	}
-	r1, _, e1 := syscall.Syscall9(procNtQueryEaFile.Addr(), 9, uintptr(fileHandle), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(buffer), uintptr(length), uintptr(_p0), uintptr(eaList), uintptr(eaListLength), uintptr(unsafe.Pointer(eaIndex)), uintptr(_p1))
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+	r0, _, _ := syscall.Syscall9(procNtQueryEaFile.Addr(), 9, uintptr(fileHandle), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(buffer), uintptr(length), uintptr(_p0), uintptr(eaList), uintptr(eaListLength), uintptr(unsafe.Pointer(eaIndex)), uintptr(_p1))
+	err = windows.NTStatus(r0)
 	return
 }
 
-func ntSetEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32) (err error) {
-	r1, _, e1 := syscall.Syscall6(procNtSetEaFile.Addr(), 4, uintptr(fileHandle), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(buffer), uintptr(length), 0, 0)
-	if r1 == 0 {
-		err = errnoErr(e1)
-	}
+func ntQueryInformationFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, fileInformation unsafe.Pointer, length uint32, fileInformationClass int32) (err windows.NTStatus) {
+	r0, _, _ := syscall.Syscall6(procNtQueryInformationFile.Addr(), 5, uintptr(fileHandle), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(fileInformation), uintptr(length), uintptr(fileInformationClass), 0)
+	err = windows.NTStatus(r0)
+	return
+}
+
+func ntSetEaFile(fileHandle windows.Handle, ioStatusBlock *windows.IO_STATUS_BLOCK, buffer unsafe.Pointer, length uint32) (err windows.NTStatus) {
+	r0, _, _ := syscall.Syscall6(procNtSetEaFile.Addr(), 4, uintptr(fileHandle), uintptr(unsafe.Pointer(ioStatusBlock)), uintptr(buffer), uintptr(length), 0, 0)
+	err = windows.NTStatus(r0)
 	return
 }
