@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -45,20 +46,20 @@ func strToEaNameBuffer(s string) ([]int8, error) {
 	return eaName, nil
 }
 
-func (ea *EaInfo) convertToFullInfoPtr() (*w32api.FILE_FULL_EA_INFORMATION, uint32, error) {
+func (ea *EaInfo) convertToFullInfoPtr() (*w32api.FILE_FULL_EA_INFORMATION, uint32, []byte, error) {
 	var eaName []int8
 	var fullInfoLen uint32
 
 	eaName, err := strToEaNameBuffer(ea.EaName)
 	if err != nil {
-		return nil, 0, err
+		return nil, 0, nil, err
 	}
 
 	if len(eaName) > 0xff {
-		return nil, 0, fmt.Errorf("EA name is too long")
+		return nil, 0, nil, fmt.Errorf("EA name is too long")
 	}
 	if len(ea.EaValue) > 0xffff {
-		return nil, 0, fmt.Errorf("EA value is too long")
+		return nil, 0, nil, fmt.Errorf("EA value is too long")
 	}
 
 	fullInfoLen = fullInfoHeaderSize + uint32(len(eaName)) + 1 + uint32(len(ea.EaValue)) // add 1 for null terminator
@@ -74,11 +75,12 @@ func (ea *EaInfo) convertToFullInfoPtr() (*w32api.FILE_FULL_EA_INFORMATION, uint
 	copy(unsafe.Slice(&fullEa.EaName[0], fullEa.EaNameLength), eaName)
 	copy(unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(&fullEa.EaName[0]), fullEa.EaNameLength+1)), fullEa.EaValueLength), ea.EaValue)
 
-	return fullEa, fullInfoLen, nil
+	return fullEa, fullInfoLen, buf, nil
 }
 
-// EaAddFile adds EA info into the given path by converting the given eaInfo into buffer that can be used by NtSetEaFile.
-func EaAddFile(dstPath string, eaInfo EaInfo) error {
+// EaWriteFile writes EA info into the given path by converting the given eaInfo into buffer that can be used by NtSetEaFile.
+// Writing EA with no content will remove the EA with the according EaName if exists, do nothing if the file did not have EA with EaName.
+func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 	var isb windows.IO_STATUS_BLOCK
 	var unicodePath windows.NTUnicodeString
 
@@ -122,7 +124,7 @@ func EaAddFile(dstPath string, eaInfo EaInfo) error {
 		return err
 	}
 
-	eaBuf, bufLen, err := eaInfo.convertToFullInfoPtr()
+	eaBuf, bufLen, buf, err := eaInfo.convertToFullInfoPtr()
 	if err != nil {
 		log.Println("failed to prepare ea buffer:", err)
 		goto EXIT
@@ -130,8 +132,10 @@ func EaAddFile(dstPath string, eaInfo EaInfo) error {
 
 	err = w32api.NtSetEaFile(fHnd, &isb, unsafe.Pointer(eaBuf), bufLen)
 	if err != nil {
-		log.Println("failed to set ea:", err)
+		goto EXIT
 	}
+
+	runtime.KeepAlive(buf) // make sure eaName and eaValue is valid until NtSetEaFile is executed.
 
 EXIT:
 	closeErr := w32api.NtClose(fHnd)
@@ -142,7 +146,7 @@ EXIT:
 		return closeErr
 	}
 
-	return nil
+	return err
 }
 
 // AddEaFileWithFile adds EA into file in dst using the content of the given file in src with the given name and flags.
@@ -162,7 +166,7 @@ func AddEaFileWithFile(dst string, src string, name string, flags uint8) error {
 		EaValue: buf,
 	}
 
-	err = EaAddFile(dst, eaInfo)
+	err = EaWriteFile(dst, eaInfo)
 	if err != nil {
 		return err
 	}

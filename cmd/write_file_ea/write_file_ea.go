@@ -22,7 +22,7 @@ func main() {
 	flag.BoolVar(&needEa, "need-ea", false, "set flag if file needs to be interpreted with EA")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s adds EA(Extended Attribute) for a file in NTFS(New Technology File System) with the content of a given source file.\nUsage: %s [target file] [source file] [ea name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [ea-name] -need-ea\nThis program only works in Windows OS.\n\n", os.Args[0], os.Args[0], os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with ea-name is removed if exists.\nUsage: %s [target file] [source file] [ea name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [ea-name] -need-ea\nThis program only works in Windows.\n\n", os.Args[0], os.Args[0], os.Args[0])
 		flag.PrintDefaults()
 	}
 
@@ -54,5 +54,5 @@ func main() {
 		os.Exit(2)
 	}
 
-	fmt.Fprintf(os.Stdout, "Written EA into file %s using %s with ea name %s\n", targetPath, srcPath, eaName)
+	fmt.Fprintf(os.Stdout, "Written EA into file \"%s\" using \"%s\" with ea name \"%s\"\n", targetPath, srcPath, eaName)
 }

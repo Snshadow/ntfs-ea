@@ -24,7 +24,7 @@ type FILE_FULL_EA_INFORMATION struct {
 	EaNameLength    uint8
 	EaValueLength   uint16
 	// 1 byte for ASCII character, 2 or more bytes for non-ASCII character, looks like the supported character follows the active codepage of the computer.., for English users, it might be cp1252, cp850...
-	EaName [anySize]int8 // [EaNameLength[int8]
+	EaName [anySize]int8 // EaNameLength[int8]
 	//_ [1]byte // '\0'
 
 	/* EaValue [EaValueLength]byte */
