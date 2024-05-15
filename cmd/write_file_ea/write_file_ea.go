@@ -15,29 +15,37 @@ import (
 
 func main() {
 	var srcPath, targetPath, eaName string
-	var needEa bool
+	var needEa, removeEa bool
 
 	flag.StringVar(&targetPath, "target-path", "", "path of target file to write EA")
 	flag.StringVar(&srcPath, "source-path", "", "path of source file to be used as content for EA")
 	flag.StringVar(&eaName, "ea-name", "", "name of the EA")
 
 	flag.BoolVar(&needEa, "need-ea", false, "set flag if file needs to be interpreted with EA")
+	flag.BoolVar(&removeEa, "remove-ea", false, "remove the EA with the given name")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with ea-name is removed if exists.\nUsage: %s [target file] [source file] [ea name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [ea-name] -need-ea\nThis program is supposed to work only in Windows.\n\n", os.Args[0], os.Args[0], os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with EaName is removed if exists.\nUsage: %s [target path] [source path] [EA name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [EA name] -need-ea\nTo remove EA with specific name, use: %s -remove-ea [target path] [EA name]\nThis program is supposed to work only in Windows.\n\n", os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 		flag.PrintDefaults()
 	}
 
 	flag.Parse()
 
+	requiredArg := 3
+
 	if targetPath == "" {
 		targetPath = flag.Arg(0)
 	}
-	if srcPath == "" {
+	if srcPath == "" && !removeEa {
 		srcPath = flag.Arg(1)
 	}
 	if eaName == "" {
-		eaName = flag.Arg(2)
+		if removeEa {
+			eaName = flag.Arg(1)
+			requiredArg = 2
+		} else {
+			eaName = flag.Arg(2)
+		}
 	}
 
 	var flags uint8 = 0
@@ -45,11 +53,26 @@ func main() {
 		flags |= ntfs_ea.NeedEa
 	}
 
-	if flag.NArg() < 3 {
+	if !(targetPath != "" && srcPath != "" && eaName != "") && !(removeEa && targetPath != "" && eaName != "") && flag.NArg() < requiredArg {
 		flag.Usage()
 		os.Exit(1)
 	}
 
+	if removeEa {
+		eaToRemove := ntfs_ea.EaInfo{
+			EaName: eaName,
+		}
+
+		err := ntfs_ea.EaWriteFile(targetPath, eaToRemove)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to remove EA with name \"%s\" from file: %v\n", eaName, err)
+			os.Exit(2)
+		}
+
+		fmt.Printf("Removed EA with name \"%s\" from file\n", eaName)
+
+		return
+	}
 	err := ntfs_ea.WriteEaWithFile(targetPath, srcPath, eaName, flags)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "failed to write EA into file: %v\n", err)

@@ -29,12 +29,12 @@
         "OriginalFilename": "",
         "PrivateBuild": "",
         "ProductName": "query_file_ea.exe",
-        "ProductVersion": "v1.0.0.0",
+        "ProductVersion": "v0.0.3",
         "SpecialBuild": ""
     },
     "VarFileInfo": {
         "Translation": {
-            "LangID": "0409",
+            "LangID": "00",
             "CharsetID": "04B0"
         }
     },

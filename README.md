@@ -1,7 +1,7 @@
 # ntfs-ea
 Access NTFS(new technology file system) Extended Attributes(EA) with golang.
 
-This package provides functions for writing and query Extended Attributes for files in NTFS which can be shown by using "fsutil file queryea [file_path] in cmd in Windows."
+This package provides functions for writing and query Extended Attributes for files in NTFS which can be shown by using "fsutil file queryea [file_path]" in cmd in Windows.
 
 _example(cp949)_
 ~~~
@@ -109,9 +109,11 @@ func main() {
 ```
 
 ## Executables
-This package has two executables for accessing EA from file. Source files can be found in cmd directory.
+This package has two executables for accessing EA from file. Binary files can be found in release page.
 
-※ _"github.com/josephspurrier/goversioninfo/cmd/goversioninfo" package used to set information for exe._
+※ _"github.com/josephspurrier/goversioninfo" package used to set information for exe._
+
+_P.S.: Microsoft Defender has a tendency to flag golang compiled exe as trojan malware, but it's a false positive. If you are concerned, you can look at the source file in the cmd directory and build it yourself._
 
 _usage_
 ~~~
@@ -119,12 +121,15 @@ write_file_ea.exe writes EA(Extended Attribute) info a file in NTFS(New Technolo
 Usage: write_file_ea.exe [target file] [source file] [ea name]
  or
  write_file_ea.exe -target-path [target path] -source-path [source path] -ea-name [ea-name] -need-ea
+To remove EA with specific name, use: D:\Codespace\ntfs-ea\cmd\write_file_ea\write_file_ea.exe -remove-ea [target path] [EA name]
 This program only works in Windows.
 
   -ea-name string
         name of the EA
   -need-ea
         set flag if file needs to be interpreted with EA
+  -remove-ea
+        remove the EA with the given name
   -source-path string
         path of source file to be used as content for EA
   -target-path string
