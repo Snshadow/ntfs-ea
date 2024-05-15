@@ -7,4 +7,8 @@ require (
 	golang.org/x/sys v0.20.0
 )
 
-require golang.org/x/text v0.15.0 // indirect
+require (
+	github.com/akavel/rsrc v0.10.2 // indirect
+	github.com/josephspurrier/goversioninfo v1.4.0 // indirect
+	golang.org/x/text v0.15.0 // indirect
+)

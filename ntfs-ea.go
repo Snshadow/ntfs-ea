@@ -149,8 +149,8 @@ EXIT:
 	return err
 }
 
-// AddEaFileWithFile adds EA into file in dst using the content of the given file in src with the given name and flags.
-func AddEaFileWithFile(dst string, src string, name string, flags uint8) error {
+// WriteEaWithFile adds EA into file in dst using the content of the given file in src with the given name and flags.
+func WriteEaWithFile(dst string, src string, name string, flags uint8) error {
 	buf, err := os.ReadFile(src)
 	if err != nil {
 		return err
@@ -224,6 +224,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	var eaInfoArr []EaInfo
 	var eaInfoPtr *w32api.FILE_FULL_EA_INFORMATION
 	buf, eaIndex := []byte(nil), uint32(0)
+	var eaIndexPtr *uint32
 
 	var eaListPtr unsafe.Pointer
 	var eaListBuf []byte
@@ -237,8 +238,9 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	} else if sz.EaSize == 0 {
 		log.Println("file does not have ea")
 		goto EXIT
+	} else {
+		eaSize = sz.EaSize
 	}
-	eaSize = sz.EaSize
 
 	// if queryName is specified, create eaList for querying
 	if len(queryName) != 0 {
@@ -279,10 +281,14 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		}
 
 		eaListPtr = unsafe.Pointer(&eaListBuf[0])
+		eaIndexPtr = &eaIndex
 	}
 
 	buf = make([]byte, eaSize)
-	err = w32api.NtQueryEaFile(fHnd, &isb, unsafe.Pointer(&buf[0]), eaSize, false, eaListPtr, eaListLen, &eaIndex, false)
+	err = w32api.NtQueryEaFile(fHnd, &isb, unsafe.Pointer(&buf[0]), eaSize, false, eaListPtr, eaListLen, eaIndexPtr, false)
+	if err != nil {
+		return nil, err
+	}
 
 	eaInfoPtr = (*w32api.FILE_FULL_EA_INFORMATION)(unsafe.Pointer(&buf[0]))
 	for {
@@ -305,6 +311,8 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		if eaInfoPtr.NextEntryOffset == 0 {
 			break
 		}
+
+		eaInfoPtr = (*w32api.FILE_FULL_EA_INFORMATION)(unsafe.Add(unsafe.Pointer(eaInfoPtr), eaInfoPtr.NextEntryOffset))
 	}
 
 EXIT:
