@@ -111,6 +111,8 @@ func main() {
 ## Executables
 This package has two executables for accessing EA from file. Source files can be found in cmd directory.
 
+※ _"github.com/josephspurrier/goversioninfo/cmd/goversioninfo" package used to set information for exe._
+
 _usage_
 ~~~
 write_file_ea.exe writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with ea-name is removed if exists.

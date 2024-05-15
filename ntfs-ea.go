@@ -126,7 +126,7 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 
 	eaBuf, bufLen, buf, err := eaInfo.convertToFullInfoPtr()
 	if err != nil {
-		log.Println("failed to prepare ea buffer:", err)
+		fmt.Println("failed to prepare ea buffer:", err)
 		goto EXIT
 	}
 
@@ -236,7 +236,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	if err != nil {
 		eaSize = 0xffff // just set it to maximum value
 	} else if sz.EaSize == 0 {
-		log.Println("file does not have ea")
+		fmt.Println("file does not have any EA")
 		goto EXIT
 	} else {
 		eaSize = sz.EaSize
@@ -247,7 +247,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		for i, name := range queryName {
 			eaName, err := strToEaNameBuffer(name)
 			if err != nil {
-				log.Println("failed to prepare name for query:", err)
+				fmt.Println("failed to prepare name for query:", err)
 				continue
 			}
 
