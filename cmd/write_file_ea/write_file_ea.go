@@ -1,6 +1,8 @@
 //go:build windows
 // +build windows
 
+//go:generate go run github.com/josephspurrier/goversioninfo/cmd/goversioninfo write_file_ea.json
+
 package main
 
 import (
