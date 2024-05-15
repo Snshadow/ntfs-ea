@@ -55,7 +55,7 @@ func main() {
 	}
 
 	for _, ea := range eaList {
-		// If EaName with missing EA is queried, the EA with that name is returned with empty EaValue instead of not returning any EA.
+		// If EaName with missing EA is queried, the EA with that name is returned with empty EaValue instead of not returning EA with the specific name.
 		if len(ea.EaValue) == 0 {
 			fmt.Printf("EA with name \"%s\" does not exist\n", ea.EaName)
 			continue
@@ -69,6 +69,8 @@ func main() {
 			err := os.WriteFile(ea.EaName, ea.EaValue, 0777)
 			if err != nil {
 				fmt.Printf("Failed to write EA for %s into file: %v\n", ea.EaName, err)
+			} else {
+				fmt.Printf("Extracted EaValue in \"%s\"", ea.EaName)
 			}
 		}
 	}

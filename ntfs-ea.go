@@ -149,7 +149,7 @@ EXIT:
 	return err
 }
 
-// WriteEaWithFile adds EA into file in dst using the content of the given file in src with the given name and flags.
+// WriteEaWithFile writes EA into file in dst using the content of the given file in src with the given name and flags.
 func WriteEaWithFile(dst string, src string, name string, flags uint8) error {
 	buf, err := os.ReadFile(src)
 	if err != nil {
