@@ -119,12 +119,15 @@ write_file_ea.exe writes EA(Extended Attribute) info a file in NTFS(New Technolo
 Usage: write_file_ea.exe [target file] [source file] [ea name]
  or
  write_file_ea.exe -target-path [target path] -source-path [source path] -ea-name [ea-name] -need-ea
+To remove EA with specific name, use: D:\Codespace\ntfs-ea\cmd\write_file_ea\write_file_ea.exe -remove-ea [target path] [EA name]
 This program only works in Windows.
 
   -ea-name string
         name of the EA
   -need-ea
         set flag if file needs to be interpreted with EA
+  -remove-ea
+        remove the EA with the given name
   -source-path string
         path of source file to be used as content for EA
   -target-path string
