@@ -111,7 +111,7 @@ func main() {
 ## Executables
 This package has two executables for accessing EA from file. Source files can be found in cmd directory.
 
-※ _"github.com/josephspurrier/goversioninfo/cmd/goversioninfo" package used to set information for exe._
+※ _"github.com/josephspurrier/goversioninfo" package used to set information for exe._
 
 _usage_
 ~~~
