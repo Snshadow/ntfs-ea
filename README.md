@@ -1,7 +1,7 @@
 # ntfs-ea
 Access NTFS(new technology file system) Extended Attributes(EA) with golang.
 
-This package provides functions for writing and query Extended Attributes for files in NTFS which can be shown by using "fsutil file queryea [file_path] in cmd in Windows."
+This package provides functions for writing and query Extended Attributes for files in NTFS which can be shown by using "fsutil file queryea [file_path]" in cmd in Windows.
 
 _example(cp949)_
 ~~~
