@@ -5,6 +5,7 @@ package ntfs_ea
 
 import (
 	"fmt"
+
 	"log"
 	"os"
 	"path/filepath"
@@ -13,7 +14,7 @@ import (
 
 	"golang.org/x/sys/windows"
 
-	"github.com/Snshadow/ntfs-ea/w32api"
+	"github.com/Snshadow/ntfs-ea/internal/w32api"
 	"github.com/nyaosorg/go-windows-mbcs"
 )
 
@@ -84,7 +85,7 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 	var isb windows.IO_STATUS_BLOCK
 	var unicodePath windows.NTUnicodeString
 
-	var openOptions uint32 = windows.FILE_RANDOM_ACCESS | windows.FILE_SYNCHRONOUS_IO_NONALERT
+	var openOptions uint32 = windows.FILE_SYNCHRONOUS_IO_NONALERT
 
 	stat, err := os.Stat(dstPath)
 	if err != nil {
@@ -94,14 +95,14 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 	if stat.IsDir() {
 		openOptions |= windows.FILE_DIRECTORY_FILE
 	} else {
-		openOptions |= windows.FILE_NON_DIRECTORY_FILE
+		openOptions |= windows.FILE_NON_DIRECTORY_FILE | windows.FILE_RANDOM_ACCESS
 	}
 
 	absPath, err := filepath.Abs(dstPath)
 	if err != nil {
 		return err
 	}
-	absPath = "\\??\\\\" + absPath // use NT Namespace
+	absPath = "\\??\\" + absPath // use NT Namespace
 
 	u16ptr, err := windows.UTF16PtrFromString(absPath)
 	if err != nil {
@@ -119,7 +120,7 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 		SecurityQoS:        nil,
 	}
 
-	fHnd, err := w32api.NtOpenFile(windows.FILE_GENERIC_READ|windows.FILE_GENERIC_WRITE, &objAttr, &isb, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, openOptions)
+	fHnd, err := w32api.NtOpenFile(windows.FILE_WRITE_EA|windows.SYNCHRONIZE, &objAttr, &isb, windows.FILE_SHARE_WRITE, openOptions)
 	if err != nil {
 		return err
 	}
@@ -180,7 +181,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	var isb windows.IO_STATUS_BLOCK
 	var unicodePath windows.NTUnicodeString
 
-	var openOptions uint32 = windows.FILE_RANDOM_ACCESS | windows.FILE_SYNCHRONOUS_IO_NONALERT
+	var openOptions uint32 = windows.FILE_SYNCHRONOUS_IO_NONALERT
 
 	stat, err := os.Stat(path)
 	if err != nil {
@@ -190,14 +191,14 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	if stat.IsDir() {
 		openOptions |= windows.FILE_DIRECTORY_FILE
 	} else {
-		openOptions |= windows.FILE_NON_DIRECTORY_FILE
+		openOptions |= windows.FILE_NON_DIRECTORY_FILE | windows.FILE_RANDOM_ACCESS
 	}
 
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return nil, err
 	}
-	absPath = "\\??\\\\" + absPath // use NT Namespace
+	absPath = "\\??\\" + absPath // use NT Namespace
 
 	u16ptr, err := windows.UTF16PtrFromString(absPath)
 	if err != nil {
@@ -215,7 +216,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		SecurityQoS:        nil,
 	}
 
-	fHnd, err := w32api.NtOpenFile(windows.FILE_GENERIC_READ|windows.FILE_GENERIC_WRITE, &objAttr, &isb, windows.FILE_SHARE_READ|windows.FILE_SHARE_WRITE, openOptions)
+	fHnd, err := w32api.NtOpenFile(windows.FILE_READ_EA|windows.SYNCHRONIZE, &objAttr, &isb, windows.FILE_SHARE_READ, openOptions)
 	if err != nil {
 		return nil, err
 	}
@@ -318,9 +319,6 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 EXIT:
 	closeErr := w32api.NtClose(fHnd)
 	if closeErr != nil {
-		if err != nil {
-			return eaInfoArr, err
-		}
 		return eaInfoArr, closeErr
 	}
 
