@@ -109,9 +109,11 @@ func main() {
 ```
 
 ## Executables
-This package has two executables for accessing EA from file. Source files can be found in cmd directory.
+This package has two executables for accessing EA from file. Binary files can be found in release page.
 
 ※ _"github.com/josephspurrier/goversioninfo" package used to set information for exe._
+
+_P.S.: Microsoft Defender has a tendency to flag golang compiled exe as trojan malware, but it's a false positive. If you are concerned, you can look at the source file in the cmd directory and build it yourself._
 
 _usage_
 ~~~
