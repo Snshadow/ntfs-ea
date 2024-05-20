@@ -122,7 +122,7 @@ Usage: write_file_ea.exe [target file] [source file] [ea name]
  or
  write_file_ea.exe -target-path [target path] -source-path [source path] -ea-name [ea-name] -need-ea
 To remove EA with specific name, use: D:\Codespace\ntfs-ea\cmd\write_file_ea\write_file_ea.exe -remove-ea [target path] [EA name]
-This program only works in Windows.
+This program is supposed to work only in Windows.
 
   -ea-name string
         name of the EA
