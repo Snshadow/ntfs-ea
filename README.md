@@ -102,7 +102,7 @@ import (
 )
 
 func main() {
-    targetPath := "C:\\test\\test.txt"
+	targetPath := "C:\\test\\test.txt"
 
 	eaList, err := ntfs_ea.QueryEaFile(targetPath)
 	if err != nil {

@@ -15,7 +15,7 @@ import (
 
 func main() {
 	var srcPath, targetPath, eaName string
-	var needEa, removeEa bool
+	var needEa, removeEa, stdin bool
 
 	flag.StringVar(&targetPath, "target-path", "", "path of target file to write EA")
 	flag.StringVar(&srcPath, "source-path", "", "path of source file to be used as content for EA")
@@ -23,9 +23,10 @@ func main() {
 
 	flag.BoolVar(&needEa, "need-ea", false, "set flag if file needs to be interpreted with EA")
 	flag.BoolVar(&removeEa, "remove-ea", false, "remove the EA with the given name")
+	flag.BoolVar(&stdin, "stdin", false, "use stdin as content for EA")
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with EaName is removed if exists.\nUsage: %s [target path] [source path] [EA name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [EA name] -need-ea\nTo remove EA with specific name, use: %s -remove-ea [target path] [EA name]\nThis program is supposed to work only in Windows.\n\n", os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with EaName is removed if exists.\nUsage: %s [target path] [source path] [EA name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [EA name] -need-ea\nWrite EA from stdin: echo \"[content for ea] | %s -stdin -target-path [target path] -ea-name [EA name]\nTo remove EA with specific name, use: %s -remove-ea [target path] [EA name]\n\n", os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
 		flag.PrintDefaults()
 	}
 
@@ -40,7 +41,7 @@ func main() {
 		srcPath = flag.Arg(1)
 	}
 	if eaName == "" {
-		if removeEa {
+		if removeEa || stdin {
 			eaName = flag.Arg(1)
 			requiredArg = 2
 		} else {
@@ -53,7 +54,7 @@ func main() {
 		flags |= ntfs_ea.NeedEa
 	}
 
-	if !(targetPath != "" && srcPath != "" && eaName != "") && !(removeEa && targetPath != "" && eaName != "") && flag.NArg() < requiredArg {
+	if !(targetPath != "" && srcPath != "" && eaName != "") && !((removeEa || stdin) && targetPath != "" && eaName != "") && flag.NArg() < requiredArg {
 		flag.Usage()
 		os.Exit(1)
 	}
@@ -73,9 +74,40 @@ func main() {
 
 		return
 	}
+
+	if stdin {
+		eaBuf := make([]byte, 65536)
+
+		n, err := os.Stdin.Read(eaBuf)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to read from stdin: %v", err)
+			os.Exit(2)
+		}
+
+		if n < len(eaBuf) {
+			eaBuf = eaBuf[:n]
+		}
+
+		eaToWrite := ntfs_ea.EaInfo{
+			Flags: flags,
+			EaName: eaName,
+			EaValue: eaBuf,
+		}
+
+		err = ntfs_ea.EaWriteFile(targetPath, eaToWrite)
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "Failed to write EA into file: %v\n", err)
+			os.Exit(2)
+		}
+
+		fmt.Printf("Written EA info file \"%s\" from stdin with ea name \"%s\"\n", targetPath, eaName)
+
+		return
+	}
+
 	err := ntfs_ea.WriteEaWithFile(targetPath, srcPath, eaName, flags)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "failed to write EA into file: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Failed to write EA into file: %v\n", err)
 		os.Exit(2)
 	}
 
