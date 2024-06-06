@@ -151,7 +151,7 @@ To remove EA with specific name, use: write_file_ea.exe -remove-ea [target path]
 query_file_ea.exe queries EA(Extended Attribute) from a file in NTFS(New Technology File System).
 Usage: query_file_ea.exe -query-name [eaName1],[eaName2],... -extract [target path]
  or query_file_ea.exe -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract
-Write EA value to stdout(for piping output): query_file_ea.exe -stdout -target-path [target path] -query-name [eaName] | (process output)
+Write EA value to stdout(for piping output): query_file_ea.exe -stdout -extract -target-path [target path] -query-name [eaName] | (process output)
 
   -dump
         dump EA to console, this is enabled by default if no action is given
