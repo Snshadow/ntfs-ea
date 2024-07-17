@@ -9,6 +9,7 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -52,7 +53,7 @@ func main() {
 
 	eaList, err := ntfs_ea.QueryFileEa(targetPath, queryList...)
 	if err != nil {
-		fmt.Printf("Error querying EA: %v\n", err)
+		log.Printf("Error querying EA: %v\n", err)
 		os.Exit(2)
 	}
 
@@ -73,7 +74,7 @@ func main() {
 			} else {
 				err := os.WriteFile(ea.EaName, ea.EaValue, 0777)
 				if err != nil {
-					fmt.Fprintf(os.Stderr, "Failed to write EA for %s into file: %v\n", ea.EaName, err)
+					log.Printf("Failed to write EA for %s into file: %v\n", ea.EaName, err)
 				} else {
 					fmt.Printf("Extracted EaValue in \"%s\"", ea.EaName)
 				}

@@ -5,7 +5,6 @@ package ntfs_ea
 
 import (
 	"fmt"
-
 	"log"
 	"os"
 	"path/filepath"
@@ -127,7 +126,7 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 
 	eaBuf, bufLen, buf, err := eaInfo.convertToFullInfoPtr()
 	if err != nil {
-		fmt.Println("failed to prepare ea buffer:", err)
+		log.Println("failed to prepare ea buffer:", err)
 		goto EXIT
 	}
 
@@ -237,7 +236,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	if err != nil {
 		eaSize = 0xffff // just set it to maximum value
 	} else if sz.EaSize == 0 {
-		fmt.Println("file does not have any EA")
+		fmt.Fprintln(os.Stderr, "file does not have any EA")
 		goto EXIT
 	} else {
 		eaSize = sz.EaSize
@@ -248,7 +247,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		for i, name := range queryName {
 			eaName, err := strToEaNameBuffer(name)
 			if err != nil {
-				fmt.Println("failed to prepare name for query:", err)
+				log.Println("failed to prepare name for query:", err)
 				continue
 			}
 

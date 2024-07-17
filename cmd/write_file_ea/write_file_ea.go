@@ -8,6 +8,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/Snshadow/ntfs-ea"
@@ -66,7 +67,7 @@ func main() {
 
 		err := ntfs_ea.EaWriteFile(targetPath, eaToRemove)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to remove EA with name \"%s\" from file: %v\n", eaName, err)
+			log.Printf("Failed to remove EA with name \"%s\" from file: %v\n", eaName, err)
 			os.Exit(2)
 		}
 
@@ -80,7 +81,7 @@ func main() {
 
 		n, err := os.Stdin.Read(eaBuf)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to read from stdin: %v", err)
+			log.Println("Failed to read from stdin:", err)
 			os.Exit(2)
 		}
 
@@ -89,14 +90,14 @@ func main() {
 		}
 
 		eaToWrite := ntfs_ea.EaInfo{
-			Flags: flags,
-			EaName: eaName,
+			Flags:   flags,
+			EaName:  eaName,
 			EaValue: eaBuf,
 		}
 
 		err = ntfs_ea.EaWriteFile(targetPath, eaToWrite)
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "Failed to write EA into file: %v\n", err)
+			log.Println("Failed to write EA into file:", err)
 			os.Exit(2)
 		}
 
@@ -107,7 +108,7 @@ func main() {
 
 	err := ntfs_ea.WriteEaWithFile(targetPath, srcPath, eaName, flags)
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "Failed to write EA into file: %v\n", err)
+		log.Println("Failed to write EA into file:", err)
 		os.Exit(2)
 	}
 
