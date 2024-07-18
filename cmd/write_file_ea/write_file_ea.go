@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/Snshadow/ntfs-ea"
 )
@@ -26,8 +27,10 @@ func main() {
 	flag.BoolVar(&removeEa, "remove-ea", false, "remove the EA with the given name")
 	flag.BoolVar(&stdin, "stdin", false, "use stdin as content for EA")
 
+	progName := filepath.Base(os.Args[0])
+
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with EaName is removed if exists.\nUsage: %s [target path] [source path] [EA name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [EA name] -need-ea\nWrite EA from stdin: echo \"[content for ea] | %s -stdin -target-path [target path] -ea-name [EA name]\nTo remove EA with specific name, use: %s -remove-ea [target path] [EA name]\n\n", os.Args[0], os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "%s writes EA(Extended Attribute) info a file in NTFS(New Technology File System) with the content of a given source file, if the source file is empty the EA with EaName is removed if exists.\nUsage: %s [target path] [source path] [EA name]\n or\n %s -target-path [target path] -source-path [source path] -ea-name [EA name] -need-ea\nWrite EA from stdin: echo \"[content for ea] | %s -stdin -target-path [target path] -ea-name [EA name]\nTo remove EA with specific name, use: %s -remove-ea [target path] [EA name]\n\n", progName, progName, progName, progName, progName)
 		flag.PrintDefaults()
 	}
 

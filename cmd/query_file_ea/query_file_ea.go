@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/Snshadow/ntfs-ea"
@@ -27,8 +28,10 @@ func main() {
 	flag.BoolVar(&extract, "extract", false, "extract EA to file(s) with according EaName")
 	flag.BoolVar(&stdout, "stdout", false, "extract EA into stdout")
 
+	progName := filepath.Base(os.Args[0])
+
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s queries EA(Extended Attribute) from a file in NTFS(New Technology File System).\nUsage: %s -query-name [eaName1],[eaName2],... -extract [target path]\n or %s -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract\nWrite EA value to stdout(for piping output): %s -stdout -extract -target-path [target path] -query-name [eaName] | (process output)\n\n", os.Args[0], os.Args[0], os.Args[0], os.Args[0])
+		fmt.Fprintf(flag.CommandLine.Output(), "%s queries EA(Extended Attribute) from a file in NTFS(New Technology File System).\nUsage: %s -query-name [eaName1],[eaName2],... -extract [target path]\n or %s -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract\nWrite EA value to stdout(for piping output): %s -stdout -extract -target-path [target path] -query-name [eaName] | (process output)\n\n", progName, progName, progName, progName)
 		flag.PrintDefaults()
 	}
 
