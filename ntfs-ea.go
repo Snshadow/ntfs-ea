@@ -5,7 +5,6 @@ package ntfs_ea
 
 import (
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -24,10 +23,6 @@ const (
 	getInfoHeaderSize  = 5 // 4 + 1
 )
 
-var (
-	cp = uintptr(windows.GetACP())
-)
-
 // EaInfo is a simplified struct of FILE_FULL_EA_INFORMATION, see https://learn.microsoft.com/en-us/windows-hardware/drivers/ddi/wdm/ns-wdm-_file_full_ea_information
 type EaInfo struct {
 	Flags   uint8
@@ -36,7 +31,7 @@ type EaInfo struct {
 }
 
 func strToEaNameBuffer(s string) ([]int8, error) {
-	buf, err := mbcs.Utf8ToAnsi(s, cp)
+	buf, err := mbcs.Utf8ToAnsi(s, 0)
 	if err != nil {
 		return nil, err
 	}
@@ -126,7 +121,7 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 
 	eaBuf, bufLen, buf, err := eaInfo.convertToFullInfoPtr()
 	if err != nil {
-		log.Println("failed to prepare ea buffer:", err)
+		fmt.Fprintln(os.Stderr, "failed to prepare ea buffer:", err)
 		goto EXIT
 	}
 
@@ -236,7 +231,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 	if err != nil {
 		eaSize = 0xffff // just set it to maximum value
 	} else if sz.EaSize == 0 {
-		fmt.Fprintln(os.Stderr, "file does not have any EA")
+		fmt.Fprintf(os.Stderr, "%s does not have any EA\n", path)
 		goto EXIT
 	} else {
 		eaSize = sz.EaSize
@@ -247,7 +242,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		for i, name := range queryName {
 			eaName, err := strToEaNameBuffer(name)
 			if err != nil {
-				log.Println("failed to prepare name for query:", err)
+				fmt.Fprintf(os.Stderr, "failed to prepare buffer for querying %s: %v\n", name, err)
 				continue
 			}
 
@@ -297,9 +292,9 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		}
 
 		nameBuf := unsafe.Slice((*byte)(unsafe.Pointer(&eaInfoPtr.EaName[0])), eaInfoPtr.EaNameLength)
-		name, err := mbcs.AnsiToUtf8(nameBuf, cp)
+		name, err := mbcs.AnsiToUtf8(nameBuf, 0)
 		if err != nil {
-			log.Println("failed to get name of EA:", err)
+			fmt.Fprintln(os.Stderr, "failed to get name of EA:", err)
 		} else {
 			eaInfo.EaName = name
 		}

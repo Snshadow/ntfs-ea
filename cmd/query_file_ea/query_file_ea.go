@@ -9,12 +9,12 @@ import (
 	"encoding/hex"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/Snshadow/ntfs-ea"
+	"github.com/Snshadow/ntfs-ea/cmd/utils"
 )
 
 func main() {
@@ -33,6 +33,12 @@ func main() {
 	flag.Usage = func() {
 		fmt.Fprintf(flag.CommandLine.Output(), "%s queries EA(Extended Attribute) from a file in NTFS(New Technology File System).\nUsage: %s -query-name [eaName1],[eaName2],... -extract [target path]\n or %s -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract\nWrite EA value to stdout(for piping output): %s -stdout -extract -target-path [target path] -query-name [eaName] | (process output)\n\n", progName, progName, progName, progName)
 		flag.PrintDefaults()
+
+		// prevent window from closing immediately if the console was created for this process
+		if utils.IsFromOwnConsole() {
+			fmt.Println("\nPress enter to close...")
+			fmt.Scanln()
+		}
 	}
 
 	flag.Parse()
@@ -56,7 +62,7 @@ func main() {
 
 	eaList, err := ntfs_ea.QueryFileEa(targetPath, queryList...)
 	if err != nil {
-		log.Printf("Error querying EA: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Error querying EA: %v\n", err)
 		os.Exit(2)
 	}
 
@@ -77,7 +83,7 @@ func main() {
 			} else {
 				err := os.WriteFile(ea.EaName, ea.EaValue, 0777)
 				if err != nil {
-					log.Printf("Failed to write EA for %s into file: %v\n", ea.EaName, err)
+					fmt.Fprintf(os.Stderr, "Failed to write EA for %s into file: %v\n", ea.EaName, err)
 				} else {
 					fmt.Printf("Extracted EaValue in \"%s\"", ea.EaName)
 				}
