@@ -30,6 +30,10 @@ type EaInfo struct {
 	EaValue []byte
 }
 
+type eaInfoBuilder struct {
+	arr []EaInfo
+}
+
 func strToEaNameBuffer(s string) ([]int8, error) {
 	buf, err := mbcs.Utf8ToAnsi(s, 0)
 	if err != nil {
@@ -41,41 +45,56 @@ func strToEaNameBuffer(s string) ([]int8, error) {
 	return eaName, nil
 }
 
-func (ea *EaInfo) convertToFullInfoPtr() (*w32api.FILE_FULL_EA_INFORMATION, uint32, []byte, error) {
-	var eaName []int8
-	var fullInfoLen uint32
+func (ea *eaInfoBuilder) convertToFullInfoPtr() (*w32api.FILE_FULL_EA_INFORMATION, uint32, []byte, error) {
+	var wholeInfoLen, dataLen uint32
+	var wholeBuf []byte
 
-	eaName, err := strToEaNameBuffer(ea.EaName)
-	if err != nil {
-		return nil, 0, nil, err
+	for i := range ea.arr {
+		eaEnt := ea.arr[i]
+		eaName, err := strToEaNameBuffer(eaEnt.EaName)
+		if err != nil {
+			return nil, 0, nil, err
+		}
+
+		if len(eaName) > 0xff {
+			return nil, 0, nil, fmt.Errorf("EA name is too long")
+		}
+
+		dataLen += uint32(len(eaEnt.EaValue))
+		if dataLen > 0x10000 {
+			return nil, 0, nil, fmt.Errorf("EA values are larger than 64KB")
+		}
+
+		fullInfoLen := fullInfoHeaderSize + uint32(len(eaName)) + 1 + uint32(len(eaEnt.EaValue)) // add 1 for null terminator
+		padSize := fullInfoLen & 3 // for adding zeros to end to entry
+		fullInfoLen += 4 - padSize // align by 4 bytes, in case of entries are buffered
+		wholeInfoLen += fullInfoLen
+
+		buf := make([]byte, fullInfoLen)
+		fullEa := (*w32api.FILE_FULL_EA_INFORMATION)(unsafe.Pointer(&buf[0]))
+
+		fullEa.Flags = eaEnt.Flags
+		fullEa.EaNameLength = uint8(len(eaName))
+		fullEa.EaValueLength = uint16(len(eaEnt.EaValue))
+	
+		copy(unsafe.Slice(&fullEa.EaName[0], fullEa.EaNameLength), eaName)
+		copy(unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(&fullEa.EaName[0]), fullEa.EaNameLength+1)), fullEa.EaValueLength), eaEnt.EaValue)
+
+		if i != (len(ea.arr) - 1) {
+			fullEa.NextEntryOffset = fullInfoLen
+		}
+
+		wholeBuf = append(wholeBuf, buf...)
 	}
 
-	if len(eaName) > 0xff {
-		return nil, 0, nil, fmt.Errorf("EA name is too long")
-	}
-	if len(ea.EaValue) > 0xffff {
-		return nil, 0, nil, fmt.Errorf("EA value is too long")
-	}
+	eaInfoPtr := (*w32api.FILE_FULL_EA_INFORMATION)(unsafe.Pointer(&wholeBuf[0]))
 
-	fullInfoLen = fullInfoHeaderSize + uint32(len(eaName)) + 1 + uint32(len(ea.EaValue)) // add 1 for null terminator
-	fullInfoLen += 4 - (fullInfoLen % 4)                                                 // align by 4 bytes, in case of entries are buffered
-
-	buf := make([]byte, fullInfoLen)
-	fullEa := (*w32api.FILE_FULL_EA_INFORMATION)(unsafe.Pointer(&buf[0]))
-
-	fullEa.Flags = ea.Flags
-	fullEa.EaNameLength = uint8(len(eaName))
-	fullEa.EaValueLength = uint16(len(ea.EaValue))
-
-	copy(unsafe.Slice(&fullEa.EaName[0], fullEa.EaNameLength), eaName)
-	copy(unsafe.Slice((*byte)(unsafe.Add(unsafe.Pointer(&fullEa.EaName[0]), fullEa.EaNameLength+1)), fullEa.EaValueLength), ea.EaValue)
-
-	return fullEa, fullInfoLen, buf, nil
+	return eaInfoPtr, wholeInfoLen, wholeBuf, nil
 }
 
 // EaWriteFile writes EA info into the given path by converting the given eaInfo into buffer that can be used by NtSetEaFile.
-// Writing EA with no content will remove the EA with the according EaName if exists, do nothing if the file did not have EA with EaName.
-func EaWriteFile(dstPath string, eaInfo EaInfo) error {
+// Writing EA with no content will remove the EA with the according EaName if exists, do nothing if the file do not have EA with EaName.
+func EaWriteFile(dstPath string, eaInfo ...EaInfo) error {
 	var isb windows.IO_STATUS_BLOCK
 	var unicodePath windows.NTUnicodeString
 
@@ -119,7 +138,11 @@ func EaWriteFile(dstPath string, eaInfo EaInfo) error {
 		return err
 	}
 
-	eaBuf, bufLen, buf, err := eaInfo.convertToFullInfoPtr()
+	builder := eaInfoBuilder{
+		arr: eaInfo,
+	}
+
+	eaBuf, bufLen, buf, err := builder.convertToFullInfoPtr()
 	if err != nil {
 		fmt.Fprintln(os.Stderr, "failed to prepare ea buffer:", err)
 		goto EXIT
@@ -254,7 +277,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 
 			if i != 0 {
 				nextOffset := getInfoHeaderSize + eaList[i-1].EaNameLength + 1 // add 1 for null terminator
-				nextOffset += 4 - (nextOffset % 4)                             // align with 4 bytes
+				nextOffset += 4 - (nextOffset & 3)                             // align with 4 bytes
 				eaList[i-1].NextEntryOffset = uint32(nextOffset)
 			}
 		}
@@ -262,7 +285,7 @@ func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
 		// convert slice info buffer
 		for _, ea := range eaList {
 			eaLen := getInfoHeaderSize + ea.EaNameLength + 1
-			eaLen += 4 - (eaLen % 4)
+			eaLen += 4 - (eaLen & 3)
 
 			eaBuf := make([]byte, eaLen)
 			eaPtr := (*w32api.FILE_GET_EA_INFORMATION)(unsafe.Pointer(&eaBuf[0]))

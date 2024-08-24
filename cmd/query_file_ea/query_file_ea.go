@@ -36,7 +36,7 @@ func main() {
 
 		// prevent window from closing immediately if the console was created for this process
 		if utils.IsFromOwnConsole() {
-			fmt.Println("\nPress enter to close...")
+			fmt.Fprintln(flag.CommandLine.Output(), "\nPress enter to close...")
 			fmt.Scanln()
 		}
 	}
