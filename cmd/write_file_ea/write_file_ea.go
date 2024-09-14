@@ -42,8 +42,6 @@ func main() {
 
 	flag.Parse()
 
-	requiredArg := 3
-
 	if targetPath == "" {
 		targetPath = flag.Arg(0)
 	}
@@ -53,7 +51,6 @@ func main() {
 	if eaName == "" {
 		if removeEa || stdin {
 			eaName = flag.Arg(1)
-			requiredArg = 2
 		} else {
 			eaName = flag.Arg(2)
 		}
@@ -64,7 +61,7 @@ func main() {
 		flags |= ntfs_ea.NeedEa
 	}
 
-	if !(targetPath != "" && srcPath != "" && eaName != "") && !((removeEa || stdin) && targetPath != "" && eaName != "") && flag.NArg() < requiredArg {
+	if !(targetPath != "" && srcPath != "" && eaName != "") && !((removeEa || stdin) && targetPath != "" && eaName != "") {
 		flag.Usage()
 		os.Exit(1)
 	}

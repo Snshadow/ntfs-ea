@@ -42,7 +42,7 @@ Ea Value Length: 2c
 
 ## Writing EA
 
-For writing EA into a file, EaAddFile or WriteEaWithFile can be used to add EA.
+For writing EA into a file, EaWriteFile or WriteEaWithFile can be used to add EA.
 
 _write EA with byte slice_
 
