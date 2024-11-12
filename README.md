@@ -61,7 +61,7 @@ func main() {
 		EaValues: []byte(eaVal),
 	}
 
-	err := ntfs_ea.EaWriteFile(targetPath, ea)
+	err := ntfs_ea.EaWriteFile(targetPath, false, ea)
 	if err != nil {
 		panic(err)
 	}
@@ -80,7 +80,7 @@ func main() {
 	sourcePath := "C:\\test\\source.txt"
 	flags := 0
 
-	err := ntfs_ea.WriteEaWithFile(targetPath, sourcePath, flags, "eaFromFile")
+	err := ntfs_ea.WriteEaWithFile(targetPath, false, sourcePath, flags, "eaFromFile")
 	if err != nil {
 		panic(err)
 	}
@@ -104,7 +104,7 @@ import (
 func main() {
 	targetPath := "C:\\test\\test.txt"
 
-	eaList, err := ntfs_ea.QueryEaFile(targetPath)
+	eaList, err := ntfs_ea.QueryEaFile(targetPath, false)
 	if err != nil {
 		panic err
 	}
@@ -130,11 +130,13 @@ write_file_ea.exe writes EA(Extended Attribute) info a file in NTFS(New Technolo
 Usage: write_file_ea.exe [target path] [source path] [EA name]
  or
  write_file_ea.exe -target-path [target path] -source-path [source path] -ea-name [EA name] -need-ea
-Write EA from stdin: echo "[content for ea] | write_file_ea.exe -stdin -target-path [target path] -ea-name [EA name]
+Write EA from standard input: echo "[content for ea] | write_file_ea.exe -stdin -target-path [target path] -ea-name [EA name]
 To remove EA with specific name, use: write_file_ea.exe -remove-ea [target path] [EA name]
 
   -ea-name string
         name of the EA
+  -follow-reparse-point
+        follow reparse point
   -need-ea
         set flag if file needs to be interpreted with EA
   -remove-ea
@@ -142,7 +144,7 @@ To remove EA with specific name, use: write_file_ea.exe -remove-ea [target path]
   -source-path string
         path of source file to be used as content for EA
   -stdin
-        use stdin as content for EA
+        use standard input for content of EA
   -target-path string
         path of target file to write EA
 ```
@@ -151,16 +153,18 @@ To remove EA with specific name, use: write_file_ea.exe -remove-ea [target path]
 query_file_ea.exe queries EA(Extended Attribute) from a file in NTFS(New Technology File System).
 Usage: query_file_ea.exe -query-name [eaName1],[eaName2],... -extract [target path]
  or query_file_ea.exe -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract
-Write EA value to stdout(for piping output): query_file_ea.exe -stdout -extract -target-path [target path] -query-name [eaName] | (process output)
+Write EA value to standard output(for piping output): query_file_ea.exe -stdout -extract -target-path [target path] -query-name [eaName] | (process output)
 
   -dump
         dump EA to console, this is enabled by default if no action is given
   -extract
         extract EA to file(s) with according EaName
+  -follow-reparse-point
+        follow reparse point
   -query-name string
         names of EA to query, split by comma, if it is not given, query all EA from the file
   -stdout
-        extract EA into stdout
+        extract EA to standard output
   -target-path string
         path of the file to query EA
 ```

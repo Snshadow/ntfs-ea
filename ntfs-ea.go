@@ -5,6 +5,7 @@ package ntfs_ea
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"runtime"
@@ -94,18 +95,28 @@ func (ea *eaInfoBuilder) convertToFullInfoPtr() (*w32api.FILE_FULL_EA_INFORMATIO
 
 // EaWriteFile writes EA info into the given path by converting the given eaInfo into buffer that can be used by NtSetEaFile.
 // Writing EA with no content will remove the EA with the according EaName if exists, do nothing if the file do not have EA with EaName.
-func EaWriteFile(dstPath string, eaInfo ...EaInfo) error {
+func EaWriteFile(dstPath string, followReparsePoint bool, eaInfo ...EaInfo) error {
+	var err error
+
 	var isb windows.IO_STATUS_BLOCK
 	var unicodePath windows.NTUnicodeString
 
 	var openOptions uint32 = windows.FILE_SYNCHRONOUS_IO_NONALERT
 
-	stat, err := os.Stat(dstPath)
+	var stat fs.FileInfo
+
+	if followReparsePoint {
+		stat, err = os.Stat(dstPath)
+	} else {
+		stat, err = os.Lstat(dstPath)
+	}
 	if err != nil {
 		return err
 	}
 
-	if stat.IsDir() {
+	if stat.Mode() & os.ModeSymlink != 0 {
+		openOptions |= windows.FILE_OPEN_REPARSE_POINT
+	} else if stat.IsDir() {
 		openOptions |= windows.FILE_DIRECTORY_FILE
 	} else {
 		openOptions |= windows.FILE_NON_DIRECTORY_FILE | windows.FILE_RANDOM_ACCESS
@@ -168,7 +179,7 @@ EXIT:
 }
 
 // WriteEaWithFile writes EA into file in dst using the content of the given file in src with the given name and flags.
-func WriteEaWithFile(dst string, src string, name string, flags uint8) error {
+func WriteEaWithFile(dst string, followReparsePoint bool, src string, name string, flags uint8) error {
 	buf, err := os.ReadFile(src)
 	if err != nil {
 		return err
@@ -184,7 +195,7 @@ func WriteEaWithFile(dst string, src string, name string, flags uint8) error {
 		EaValue: buf,
 	}
 
-	err = EaWriteFile(dst, eaInfo)
+	err = EaWriteFile(dst, followReparsePoint, eaInfo)
 	if err != nil {
 		return err
 	}
@@ -194,18 +205,29 @@ func WriteEaWithFile(dst string, src string, name string, flags uint8) error {
 
 // QueryFileEa queries all EAs in the file in given path and return EaInfo slice which has flag, name, and value of EA.
 // If queryName is specified, will only query for EAs that have EaName included in queryName.
-func QueryFileEa(path string, queryName ...string) ([]EaInfo, error) {
+func QueryFileEa(path string, followReparsePoint bool, queryName ...string) ([]EaInfo, error) {
+	var err error
+
 	var isb windows.IO_STATUS_BLOCK
 	var unicodePath windows.NTUnicodeString
 
 	var openOptions uint32 = windows.FILE_SYNCHRONOUS_IO_NONALERT
 
-	stat, err := os.Stat(path)
+	var stat fs.FileInfo
+
+	if followReparsePoint {
+		stat, err = os.Stat(path)
+	} else {
+		stat, err = os.Lstat(path)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	if stat.IsDir() {
+
+	if stat.Mode() & os.ModeSymlink != 0 {
+		openOptions |= windows.FILE_OPEN_REPARSE_POINT
+	} else if stat.IsDir() {
 		openOptions |= windows.FILE_DIRECTORY_FILE
 	} else {
 		openOptions |= windows.FILE_NON_DIRECTORY_FILE | windows.FILE_RANDOM_ACCESS

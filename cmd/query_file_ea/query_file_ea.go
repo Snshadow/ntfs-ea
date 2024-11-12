@@ -19,19 +19,20 @@ import (
 
 func main() {
 	var targetPath, queryName string
-	var dump, extract, stdout bool
+	var dump, extract, stdout, followReparsePoint bool
 
 	flag.StringVar(&targetPath, "target-path", "", "path of the file to query EA")
 	flag.StringVar(&queryName, "query-name", "", "names of EA to query, split by comma, if it is not given, query all EA from the file")
 
 	flag.BoolVar(&dump, "dump", false, "dump EA to console, this is enabled by default if no action is given")
 	flag.BoolVar(&extract, "extract", false, "extract EA to file(s) with according EaName")
-	flag.BoolVar(&stdout, "stdout", false, "extract EA into stdout")
+	flag.BoolVar(&stdout, "stdout", false, "extract EA to standard output")
+	flag.BoolVar(&followReparsePoint, "follow-reparse-point", false, "follow reparse point")
 
 	progName := filepath.Base(os.Args[0])
 
 	flag.Usage = func() {
-		fmt.Fprintf(flag.CommandLine.Output(), "%s queries EA(Extended Attribute) from a file in NTFS(New Technology File System).\nUsage: %s -query-name [eaName1],[eaName2],... -extract [target path]\n or %s -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract\nWrite EA value to stdout(for piping output): %s -stdout -extract -target-path [target path] -query-name [eaName] | (process output)\n\n", progName, progName, progName, progName)
+		fmt.Fprintf(flag.CommandLine.Output(), "%s queries EA(Extended Attribute) from a file in NTFS(New Technology File System).\nUsage: %s -query-name [eaName1],[eaName2],... -extract [target path]\n or %s -target-path [target path] -query-name [eaName1],[eaName2],... -dump -extract\nWrite EA value to standard output(for piping output): %s -stdout -extract -target-path [target path] -query-name [eaName] | (process output)\n\n", progName, progName, progName, progName)
 		flag.PrintDefaults()
 
 		// prevent window from closing immediately if the console was created for this process
@@ -60,7 +61,7 @@ func main() {
 		}
 	}
 
-	eaList, err := ntfs_ea.QueryFileEa(targetPath, queryList...)
+	eaList, err := ntfs_ea.QueryFileEa(targetPath, followReparsePoint, queryList...)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error querying EA: %v\n", err)
 		os.Exit(2)
