@@ -95,6 +95,10 @@ func convertToFullInfoBuf(arr []EaInfo) ([]byte, error) {
 // EaWriteFile writes EA info into the given path by converting the given eaInfo into buffer that can be used by NtSetEaFile.
 // Writing EA with no content will remove the EA with the according EaName if exists, do nothing if the file do not have EA with EaName.
 func EaWriteFile(dstPath string, followReparsePoint bool, eaInfo ...EaInfo) error {
+	if len(eaInfo) == 0 {
+		return fmt.Errorf("EA to write is empty")
+	}
+
 	var err error
 
 	var isb windows.IO_STATUS_BLOCK
