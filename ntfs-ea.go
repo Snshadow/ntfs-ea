@@ -59,12 +59,15 @@ func convertToFullInfoBuf(arr []EaInfo) ([]byte, error) {
 
 		fullInfoLen := fullInfoHeaderSize + uint32(len(eaName)) + 1 + uint32(len(eaEnt.EaValue)) // add 1 for null terminator
 		padSize := fullInfoLen & 3 // for adding zeros to end to entry
-		fullInfoLen += 4 - padSize // align by 4 bytes, in case of entries are buffered
+		if padSize != 0 {
+			fullInfoLen += 4 - padSize // align by 4 bytes, in case of entries are buffered
+		}
 		wholeInfoLen += fullInfoLen
 
-		if wholeInfoLen > 0x10000 {
-			// if the total size of EA info is larger than 64KB  bytes, this EaSetEaFile fails with STATUS_EA_TOO_LARGE
-			// if it goes a lot larger(potential bug(?)), it will write the data up to the limit without erroring, causing inconsistent data
+		if wholeInfoLen > 0xffff {
+			// if the total size of EA info is larger than 64KB bytes, this EaSetEaFile fails with STATUS_EA_TOO_LARGE,
+			// if it goes a lot larger(potential bug(?)), it will write the data up to the limit without erroring, 
+			// causing inconsistent data
 			return nil, fmt.Errorf("EA info data is larger than 64KB")
 		}
 
@@ -75,7 +78,7 @@ func convertToFullInfoBuf(arr []EaInfo) ([]byte, error) {
 		fullEa.EaNameLength = uint8(len(eaName))
 		fullEa.EaValueLength = uint16(len(eaEnt.EaValue))
 
-		if i < (len(arr) - 1) {
+		if i < len(arr) - 1 {
 			fullEa.NextEntryOffset = fullInfoLen
 		}
 
@@ -263,6 +266,7 @@ func QueryFileEa(path string, followReparsePoint bool, queryName ...string) ([]E
 	buf, eaIndex := []byte(nil), uint32(0)
 	var eaIndexPtr *uint32
 
+	var eaListPtr unsafe.Pointer
 	var eaListBuf bytes.Buffer
 	var eaList []w32api.FILE_GET_EA_INFORMATION
 
@@ -302,7 +306,9 @@ func QueryFileEa(path string, followReparsePoint bool, queryName ...string) ([]E
 		// convert slice info buffer
 		for _, ea := range eaList {
 			eaLen := getInfoHeaderSize + ea.EaNameLength + 1
-			eaLen += 4 - (eaLen & 3)
+			if pad := eaLen & 3; pad != 0 {
+				eaLen += 4 - pad
+			}
 
 			eaBuf := make([]byte, eaLen)
 			eaPtr := (*w32api.FILE_GET_EA_INFORMATION)(unsafe.Pointer(&eaBuf[0]))
@@ -315,11 +321,12 @@ func QueryFileEa(path string, followReparsePoint bool, queryName ...string) ([]E
 			eaListBuf.Write(eaBuf)
 		}
 
+		eaListPtr = unsafe.Pointer(&eaListBuf.Bytes()[0])
 		eaIndexPtr = &eaIndex
 	}
 
 	buf = make([]byte, eaSize)
-	err = w32api.NtQueryEaFile(fHnd, &isb, unsafe.Pointer(&buf[0]), eaSize, false, unsafe.Pointer(&eaListBuf.Bytes()[0]), uint32(eaListBuf.Len()), eaIndexPtr, false)
+	err = w32api.NtQueryEaFile(fHnd, &isb, unsafe.Pointer(&buf[0]), eaSize, false, eaListPtr, uint32(eaListBuf.Len()), eaIndexPtr, false)
 	if err != nil {
 		return nil, err
 	}
