@@ -34,8 +34,8 @@ func TestWriteFileEa(t *testing.T) {
 	}
 
 	eaInfos := []EaInfo{
-		{EaName: "TESTEA1", EaValue: []byte("test value 1")},
-		{EaName: "TEST°2", EaValue: []byte("test value 2")},
+		{EaName: "TESTEA¼", EaValue: []byte("test value 1")},
+		{EaName: "TESTEA2", EaValue: []byte("test value 2")},
 		{EaName: "TESTEA³", EaValue: []byte("test value 3")},
 		{Flags: NeedEa, EaName: "TEST±A4", EaValue: []byte("test required value 4")},
 	}
@@ -103,7 +103,7 @@ func TestQueryFileEa(t *testing.T) {
 	}
 
 	eaInfo := []EaInfo{
-		{Flags: 0, EaName: "TESTEA1", EaValue: []byte("test value 1")},
+		{Flags: 0, EaName: "TESTEA¼", EaValue: []byte("test value 1")},
 		{EaName: "TESTEA2", EaValue: []byte("test value 2")},
 	}
 

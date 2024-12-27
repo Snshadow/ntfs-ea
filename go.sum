@@ -1,6 +1,6 @@
-github.com/nyaosorg/go-windows-mbcs v0.4.2 h1:2znrE0YIgDIRlq6YB4l1n8DOlG89dV+hYsBqywL8MrM=
-github.com/nyaosorg/go-windows-mbcs v0.4.2/go.mod h1:FuQCaPRzyLbBL4ZXG+gtSA/hAAgVvIWtpqR2YLWYZiA=
-golang.org/x/sys v0.27.0 h1:wBqf8DvsY9Y/2P8gAfPDEYNuS30J4lPHJxXSb/nJZ+s=
-golang.org/x/sys v0.27.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
-golang.org/x/text v0.20.0 h1:gK/Kv2otX8gz+wn7Rmb3vT96ZwuoxnQlY+HlJVj7Qug=
-golang.org/x/text v0.20.0/go.mod h1:D4IsuqiFMhST5bX19pQ9ikHC2GsaKyk/oF+pn3ducp4=
+github.com/nyaosorg/go-windows-mbcs v0.4.3 h1:4/qX+VhzvpINp4ptREYgTunMzIRBEasXsZL8uV4JhY4=
+github.com/nyaosorg/go-windows-mbcs v0.4.3/go.mod h1:80D9r2RNEPG2STQVD5tsgGB/SNkT6HS0ZlKufUn/F70=
+golang.org/x/sys v0.28.0 h1:Fksou7UEQUWlKvIdsqzJmUmCX3cZuD2+P3XyyzwMhlA=
+golang.org/x/sys v0.28.0/go.mod h1:/VUhepiaJMQUp4+oa/7Zr1D23ma6VTLIYjOOTFZPUcA=
+golang.org/x/text v0.21.0 h1:zyQAAkrwaneQ066sspRyJaG9VNi/YJ1NfzcGB3hZ/qo=
+golang.org/x/text v0.21.0/go.mod h1:4IBbMaMmOPCJ8SecivzSH54+73PCFmPWxNTLm+vZkEQ=
