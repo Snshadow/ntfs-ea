@@ -4,6 +4,8 @@ Access NTFS(new technology file system) Extended Attributes(EA) with golang.
 
 This package provides functions for writing and querying Extended Attributes for files in NTFS which can be shown by using "fsutil file queryea [file_path]" in cmd in Windows.
 
+_The maximum size available for EA entries for each file is 65535(0xffff) bytes, trying to write larger data then maximum size would result in failing with STATUS_EA_TOO_LARGE or truncated data(https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-fsa/be0bb27a-4954-4786-80a6-947df0e82a11)._
+
 _example(cp949)_
 
 ```
@@ -106,7 +108,7 @@ func main() {
 
 	eaList, err := ntfs_ea.QueryEaFile(targetPath, false)
 	if err != nil {
-		panic err
+		panic(err)
 	}
 
 	for _, ea := range eaList {
