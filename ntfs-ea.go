@@ -180,6 +180,16 @@ EXIT:
 
 // WriteEaWithFile writes EA into file in dst using the content of the given file in src with the given name and flags.
 func WriteEaWithFile(dst string, followReparsePoint bool, src string, name string, flags uint8) error {
+	// check file size first before loading to memory, just check if the file size
+	// is smaller then maximum EA buffer allowed for a single file
+	stat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+	if stat.Size() > 0xffff {
+		return fmt.Errorf("file size exceeds maximum size of EA buffer")
+	}
+
 	buf, err := os.ReadFile(src)
 	if err != nil {
 		return err
